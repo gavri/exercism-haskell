@@ -1,0 +1,9 @@
+*
+
+!*/
+!*.hs
+!.gitignore
+
+.stack-work
+
+Tests.hs
