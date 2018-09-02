@@ -1,7 +1,6 @@
 module SecretHandshake (handshake) where
 
 import Data.Bits
-import Data.Function
 
 commandFromBitPosition :: Int -> [String] -> [String]
 commandFromBitPosition 0 = (++ ["wink"])
@@ -11,8 +10,10 @@ commandFromBitPosition 3 = (++ ["jump"])
 commandFromBitPosition 4 = reverse
 
 handshake :: Int -> [String]
-handshake n = foldl (&) [] commands
-  where commands = map commandFromBitPosition setBits
-        setBits = filter isBitSet bitPositions
-        isBitSet m = n .&. (shift 1 m) /= 0
-        bitPositions = [0, 1, 2, 3, 4]
+handshake n = foldr ($) [] commands
+  where commands = map commandFromBitPosition bitPositionsThatAreSet
+        bitPositionsThatAreSet = filter isBitSet bitPositions
+        bitPositions = [4, 3, 2, 1, 0]
+        isBitSet m = masked m /= 0
+        masked m = n .&. bitMask m
+        bitMask = shift 1
