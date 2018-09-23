@@ -1,30 +1,28 @@
 module Minesweeper (annotate) where
 
-mapFst f (x, y) = (f x, y)
-mapSnd = fmap
+import Control.Arrow
 
-inc x = x + 1
-dec x = x - 1
+withIndex xs = zip xs [0..]
 
 map2DWithIndex :: (a -> Int -> Int -> b) -> [[a]] -> [[b]]
-map2DWithIndex f grid = map (\(row, r) -> (map (\(cell, c) -> f cell r c) (zip row [0..]))) $ zip grid [0..]
+map2DWithIndex f grid = map (\(row, r) -> (map (\(cell, c) -> f cell r c) (withIndex row))) $ withIndex grid
 
 neighbors :: (Int, Int) -> Int -> Int -> [(Int, Int)]
-neighbors position width height = filter onBoard candidateNeighbors
-  where candidateNeighbors = map ($ position) [mapFst dec,
-                                               mapFst inc,
-                                               mapSnd dec,
-                                               mapSnd inc,
-                                               (mapFst inc) . (mapSnd inc),
-                                               (mapFst inc) . (mapSnd dec),
-                                               (mapFst dec) . (mapSnd inc),
-                                               (mapFst dec) . (mapSnd dec)]
+neighbors position width height = filter isNeighbor candidateNeighbors
+  where candidateNeighbors = sequence [f *** g | f <- [inc, dec, id], g <- [inc, dec, id]] position
+        isNeighbor position = notSelf position && onBoard position
         onBoard (x, y) = x >= 0 && x < height && y >= 0 && y < width
+        notSelf otherPositon = position /= otherPositon
+        inc = (+ 1)
+        dec = subtract 1
 
 annotate :: [String] -> [String]
 annotate board = map2DWithIndex fill board
-        where fill cellContent x y = if (cellContent == '*') then '*' else numberOfBombs x y
-              numberOfBombs x y = displayedCell $ length $ filter (== '*') $ map (\(row, col) -> (board !! row) !! col) $ neighbors (x, y) width height
+        where fill cellContent x y = if hasBomb cellContent then '*' else numberOfBombs x y
+              numberOfBombs x y = displayedCell $ length $ filter hasBomb $ map cell $ neighbors (x, y) width height
               width = (length . head) board
               height = length board
-              displayedCell n = if (n > 0) then ((show n) !! 0) else ' '
+              displayedCell n = if n > 0 then digitToChar n else ' '
+              cell (x, y) = (board !! x) !! y
+              digitToChar = head . show
+              hasBomb = (== '*')
