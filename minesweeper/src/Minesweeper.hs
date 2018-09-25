@@ -5,7 +5,11 @@ import Control.Arrow
 withIndex xs = zip xs [0..]
 
 map2DWithIndex :: (a -> Int -> Int -> b) -> [[a]] -> [[b]]
-map2DWithIndex f grid = map (\(row, r) -> (map (\(cell, c) -> f cell r c) (withIndex row))) $ withIndex grid
+map2DWithIndex f grid = map rowMapper rowsWithIndices
+  where rowMapper (row, r) = map colMapper colsWithIndices
+          where colMapper (cell, c) = f cell r c
+                colsWithIndices = withIndex row
+        rowsWithIndices = withIndex grid
 
 neighbors :: (Int, Int) -> Int -> Int -> [(Int, Int)]
 neighbors position width height = filter isNeighbor candidateNeighbors
